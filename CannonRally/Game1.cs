@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using FarseerPhysics;
 using FarseerPhysics.DebugView;
 using FarseerPhysics.Dynamics;
@@ -14,16 +15,15 @@ namespace CannonRally
     /// </summary>
     public class Game1 : Game
     {
-        private SpriteFont _font;
         private Tire _tire;
-        private DebugViewXNA DebugView;
-        private GraphicsDeviceManager graphics;
-        private SpriteBatch spriteBatch;
-        private World world;
+        private DebugViewXNA _debugView;
+        private readonly GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
+        private World _world;
 
         public Game1()
         {
-            graphics = new GraphicsDeviceManager(this);
+            _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
         }
 
@@ -47,21 +47,28 @@ namespace CannonRally
         protected override void LoadContent()
         {
             // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            world = new World(Vector2.Zero);
+            _world = new World(Vector2.Zero);
+
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
-            _tire = new Tire(BodyFactory.CreateRectangle(world, 5f, 5f, 1f, new Vector2(1, 2)), tireSprite);
+            _tire =
+                new Tire(
+                    BodyFactory.CreateRectangle(_world, ConvertUnits.ToSimUnits(tireSprite.Texture.Width),
+                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 1f, new Vector2(1, 2)), tireSprite);
 
-            if (DebugView == null)
+            if (_debugView == null)
             {
-                DebugView = new DebugViewXNA(world);
-                DebugView.RemoveFlags(DebugViewFlags.Shape);
-                DebugView.RemoveFlags(DebugViewFlags.Joint);
-                DebugView.DefaultShapeColor = Color.White;
-                DebugView.SleepingShapeColor = Color.LightGray;
-                DebugView.LoadContent(GraphicsDevice, Content);
+                _debugView = new DebugViewXNA(_world);
+
+                // default is shape, controller, joints
+                // we just want shapes to display
+                //DebugView.RemoveFlags(DebugViewFlags.Controllers);
+                //DebugView.RemoveFlags(DebugViewFlags.Joint);
+                _debugView.AppendFlags(DebugViewFlags.PolygonPoints);
+                _debugView.AppendFlags(DebugViewFlags.DebugPanel);
+                _debugView.LoadContent(GraphicsDevice, Content);
             }
         }
 
@@ -85,7 +92,7 @@ namespace CannonRally
                 Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
+            _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
             _tire.Update(gameTime);
 
             base.Update(gameTime);
@@ -99,30 +106,16 @@ namespace CannonRally
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            var SimProjection = Matrix.CreateOrthographicOffCenter(
-                0f,
-                ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width),
-                ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height), 0f, 0f, 
-                1f);
-            var SimView = Matrix.Identity;
-            var View = Matrix.Identity;
+            _spriteBatch.Begin();
+
             var projection = Matrix.CreateOrthographicOffCenter(
                 0f,
-                ConvertUnits.ToSimUnits(graphics.GraphicsDevice.Viewport.Width),
-                ConvertUnits.ToSimUnits(graphics.GraphicsDevice.Viewport.Height), 0f, 0f,
+                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width),
+                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height), 0f, 0f,
                 1f);
-
-            spriteBatch.Begin(0, null, null, null, null, null, View);
-            //spriteBatch.Begin();
-            _tire.Draw(spriteBatch);
-
-
-            DebugView.RenderDebugData(ref projection);
-
-            spriteBatch.End();
-            //DebugView.RenderDebugData(SimProjection, SimView);
-
-
+            _tire.Draw(_spriteBatch);
+            _spriteBatch.End();
+            _debugView.RenderDebugData(ref projection);
             base.Draw(gameTime);
         }
     }
