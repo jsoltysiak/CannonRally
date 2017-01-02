@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using CannonRally.FixtureUserData;
 using FarseerPhysics;
 using FarseerPhysics.Dynamics;
 using Microsoft.Xna.Framework;
@@ -14,26 +16,57 @@ namespace CannonRally
             Body = body;
             Sprite = sprite;
 
+            _groundAreas = new List<GroundAreaUserData>();
+            _traction = 1.0f;
+
             Body.BodyType = BodyType.Dynamic;
+            body.UserData = this;
         }
 
         public Vector2 Position { get; set; }
         public Body Body { get; set; }
         public Sprite Sprite { get; set; }
 
+        private readonly IList<GroundAreaUserData> _groundAreas;
+        private float _traction;
         public float DragForceMultiplier { get; set; } = 2f;
 
         public void Update(GameTime gameTime)
         {
             UpdateFriction();
-            HandleInput();
+            UpdateDrive();
+            UpdateTurn();
         }
 
-        private void HandleInput()
+        public void AddGroundArea(GroundAreaUserData ground)
         {
-            UpdateDrive();
+            _groundAreas.Add(ground);
+            UpdateTraction();
+        }
 
-            UpdateTurn();
+        public void RemoveGroundArea(GroundAreaUserData ground)
+        {
+            _groundAreas.Remove(ground);
+            UpdateTraction();
+        }
+
+        private void UpdateTraction()
+        {
+            if (_groundAreas.Count == 0)
+            {
+                _traction = 1;
+            }
+            else
+            {
+                _traction = 0;
+                foreach (var groundArea in _groundAreas)
+                {
+                    if (groundArea.FrictionModifier > _traction)
+                    {
+                        _traction = groundArea.FrictionModifier;
+                    }
+                }
+            }
         }
 
         private void UpdateDrive()
@@ -85,17 +118,17 @@ namespace CannonRally
 
         private void UpdateFriction()
         {
-            const float maxLateralImpulse = 0.06f;
+            const float maxLateralImpulse = 0.1f;
             var impulse = Body.Mass*-GetLateralVelocity();
             if (impulse.Length() > maxLateralImpulse)
                 impulse *= maxLateralImpulse/impulse.Length();
-            Body.ApplyLinearImpulse(impulse, Body.WorldCenter);
-            Body.ApplyAngularImpulse(0.1f*Body.Inertia*-Body.AngularVelocity);
+            Body.ApplyLinearImpulse(_traction*impulse, Body.WorldCenter);
+            Body.ApplyAngularImpulse(_traction*0.1f*Body.Inertia*-Body.AngularVelocity);
 
             var currentForwardNormal = GetForwardVelocity();
             if (Math.Abs(currentForwardNormal.Length()) > 1) currentForwardNormal.Normalize();
             var dragForceMagniture = currentForwardNormal*-DragForceMultiplier;
-            Body.ApplyForce(dragForceMagniture, Body.WorldCenter);
+            Body.ApplyForce(_traction*dragForceMagniture, Body.WorldCenter);
         }
 
         private Vector2 GetLateralVelocity()

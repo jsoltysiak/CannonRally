@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Linq;
+using CannonRally.FixtureUserData;
 using FarseerPhysics;
+using FarseerPhysics.Collision.Shapes;
+using FarseerPhysics.Common;
 using FarseerPhysics.DebugView;
 using FarseerPhysics.Dynamics;
+using FarseerPhysics.Dynamics.Contacts;
 using FarseerPhysics.Factories;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -50,13 +54,17 @@ namespace CannonRally
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             _world = new World(Vector2.Zero);
-
+            _world.ContactManager.BeginContact = BeginContact;
+            _world.ContactManager.EndContact = EndContact;
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             _tire =
                 new Tire(
-                    BodyFactory.CreateRectangle(_world, ConvertUnits.ToSimUnits(tireSprite.Texture.Width),
-                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 1f, new Vector2(1, 2)), tireSprite);
+                    BodyFactory.CreateRoundedRectangle(_world, ConvertUnits.ToSimUnits(tireSprite.Texture.Width),
+                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 0.1f, 0.1f, 0, 1f, new Vector2(1, 2), userData: new TireUserData()), tireSprite);
+
+            var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
+            ground.IsSensor = true;
 
             if (_debugView == null)
             {
@@ -69,6 +77,45 @@ namespace CannonRally
                 _debugView.AppendFlags(DebugViewFlags.PolygonPoints);
                 _debugView.AppendFlags(DebugViewFlags.DebugPanel);
                 _debugView.LoadContent(GraphicsDevice, Content);
+            }
+        }
+
+        private void EndContact(Contact contact)
+        {
+            HandleContact(contact, false);
+        }
+
+        private bool BeginContact(Contact contact)
+        {
+            HandleContact(contact, true);
+            return true;
+        }
+
+        private void HandleContact(Contact contact, bool began)
+        {
+            FixtureUserData.FixtureUserData fudA = (FixtureUserData.FixtureUserData) contact.FixtureA.UserData;
+            FixtureUserData.FixtureUserData fudB = (FixtureUserData.FixtureUserData) contact.FixtureB.UserData;
+
+            if(fudA == null || fudB == null)
+                return;
+
+            if (fudA.Type == FixtureUserDataType.CarTire && fudB.Type == FixtureUserDataType.GroundArea)
+                TireVsGroundArea(contact.FixtureA, contact.FixtureB, began);
+            else if (fudA.Type == FixtureUserDataType.GroundArea && fudB.Type == FixtureUserDataType.CarTire)
+                TireVsGroundArea(contact.FixtureB, contact.FixtureA, began);
+
+        }
+
+        private void TireVsGroundArea(Fixture tireFixture, Fixture groundFixture, bool began)
+        {
+            var tire = (Tire)tireFixture.Body.UserData;
+            if (began)
+            {
+                tire.AddGroundArea((GroundAreaUserData)groundFixture.UserData);
+            }
+            else
+            {
+                tire.RemoveGroundArea((GroundAreaUserData)groundFixture.UserData);
             }
         }
 
