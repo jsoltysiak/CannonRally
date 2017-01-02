@@ -11,6 +11,16 @@ namespace CannonRally
 {
     public class Tire
     {
+        private const float DragForceMultiplier = 2f;
+        private const float MaxForwardSpeed = 5f;
+        private const float MaxBackwardSpeed = -5f;
+        private const float MaxDriveForce = 5f;
+        private const float MaxTorque = 0.3f;
+        private const float MaxLateralImpulse = 0.1f;
+
+        private readonly IList<GroundAreaUserData> _groundAreas;
+        private float _traction;
+
         public Tire(Body body, Sprite sprite)
         {
             Body = body;
@@ -26,10 +36,6 @@ namespace CannonRally
         public Vector2 Position { get; set; }
         public Body Body { get; set; }
         public Sprite Sprite { get; set; }
-
-        private readonly IList<GroundAreaUserData> _groundAreas;
-        private float _traction;
-        public float DragForceMultiplier { get; set; } = 2f;
 
         public void Update(GameTime gameTime)
         {
@@ -60,27 +66,19 @@ namespace CannonRally
             {
                 _traction = 0;
                 foreach (var groundArea in _groundAreas)
-                {
                     if (groundArea.FrictionModifier > _traction)
-                    {
                         _traction = groundArea.FrictionModifier;
-                    }
-                }
             }
         }
 
         private void UpdateDrive()
         {
-            const float maxForwardSpeed = 5f;
-            const float maxBackwardSpeed = -5f;
-            const float maxDriveForce = 5f;
-
             var desiredSpeed = 0.0f;
             var keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.W))
-                desiredSpeed = maxForwardSpeed;
+                desiredSpeed = MaxForwardSpeed;
             else if (keyboardState.IsKeyDown(Keys.S))
-                desiredSpeed = maxBackwardSpeed;
+                desiredSpeed = MaxBackwardSpeed;
             else return;
 
             var currentForwardNormal = Body.GetWorldVector(new Vector2(0, 1));
@@ -88,9 +86,9 @@ namespace CannonRally
 
             float force = 0;
             if (desiredSpeed > currentSpeed)
-                force = maxDriveForce;
+                force = MaxDriveForce;
             else if (desiredSpeed < currentSpeed)
-                force = -maxDriveForce;
+                force = -MaxDriveForce;
             else
                 return;
 
@@ -99,13 +97,12 @@ namespace CannonRally
 
         private void UpdateTurn()
         {
-            const float maxTorque = 0.3f;
             var desiredTorque = 0.0f;
             var keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.A))
-                desiredTorque = -maxTorque;
+                desiredTorque = -MaxTorque;
             else if (keyboardState.IsKeyDown(Keys.D))
-                desiredTorque = maxTorque;
+                desiredTorque = MaxTorque;
 
             Body.ApplyTorque(desiredTorque);
         }
@@ -118,10 +115,9 @@ namespace CannonRally
 
         private void UpdateFriction()
         {
-            const float maxLateralImpulse = 0.1f;
             var impulse = Body.Mass*-GetLateralVelocity();
-            if (impulse.Length() > maxLateralImpulse)
-                impulse *= maxLateralImpulse/impulse.Length();
+            if (impulse.Length() > MaxLateralImpulse)
+                impulse *= MaxLateralImpulse/impulse.Length();
             Body.ApplyLinearImpulse(_traction*impulse, Body.WorldCenter);
             Body.ApplyAngularImpulse(_traction*0.1f*Body.Inertia*-Body.AngularVelocity);
 
