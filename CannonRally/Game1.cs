@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
 using CannonRally.FixtureUserData;
 using FarseerPhysics;
-using FarseerPhysics.Collision.Shapes;
-using FarseerPhysics.Common;
 using FarseerPhysics.DebugView;
 using FarseerPhysics.Dynamics;
 using FarseerPhysics.Dynamics.Contacts;
@@ -19,10 +16,10 @@ namespace CannonRally
     /// </summary>
     public class Game1 : Game
     {
-        private Tire _tire;
-        private DebugViewXNA _debugView;
         private readonly GraphicsDeviceManager _graphics;
+        private DebugViewXNA _debugView;
         private SpriteBatch _spriteBatch;
+        private Tire _tire;
         private World _world;
 
         public Game1()
@@ -39,7 +36,18 @@ namespace CannonRally
         /// </summary>
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            _world = new World(Vector2.Zero);
+            _world.ContactManager.BeginContact = BeginContact;
+            _world.ContactManager.EndContact = EndContact;
+
+            if (_debugView == null)
+            {
+                _debugView = new DebugViewXNA(_world);
+                _debugView.RemoveFlags(DebugViewFlags.Controllers);
+                _debugView.RemoveFlags(DebugViewFlags.Joint);
+                _debugView.AppendFlags(DebugViewFlags.PolygonPoints);
+                _debugView.AppendFlags(DebugViewFlags.DebugPanel);
+            }
 
             base.Initialize();
         }
@@ -53,31 +61,17 @@ namespace CannonRally
             // Create a new SpriteBatch, which can be used to draw textures.
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            _world = new World(Vector2.Zero);
-            _world.ContactManager.BeginContact = BeginContact;
-            _world.ContactManager.EndContact = EndContact;
-
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             _tire =
                 new Tire(
                     BodyFactory.CreateRoundedRectangle(_world, ConvertUnits.ToSimUnits(tireSprite.Texture.Width),
-                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 0.1f, 0.1f, 0, 1f, new Vector2(1, 2), userData: new TireUserData()), tireSprite);
+                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 0.1f, 0.1f, 0, 1f, new Vector2(1, 2),
+                        userData: new TireUserData()), tireSprite);
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
 
-            if (_debugView == null)
-            {
-                _debugView = new DebugViewXNA(_world);
-
-                // default is shape, controller, joints
-                // we just want shapes to display
-                //DebugView.RemoveFlags(DebugViewFlags.Controllers);
-                //DebugView.RemoveFlags(DebugViewFlags.Joint);
-                _debugView.AppendFlags(DebugViewFlags.PolygonPoints);
-                _debugView.AppendFlags(DebugViewFlags.DebugPanel);
-                _debugView.LoadContent(GraphicsDevice, Content);
-            }
+            _debugView.LoadContent(GraphicsDevice, Content);
         }
 
         private void EndContact(Contact contact)
@@ -93,30 +87,25 @@ namespace CannonRally
 
         private void HandleContact(Contact contact, bool began)
         {
-            FixtureUserData.FixtureUserData fudA = (FixtureUserData.FixtureUserData) contact.FixtureA.UserData;
-            FixtureUserData.FixtureUserData fudB = (FixtureUserData.FixtureUserData) contact.FixtureB.UserData;
+            var fudA = (FixtureUserData.FixtureUserData) contact.FixtureA.UserData;
+            var fudB = (FixtureUserData.FixtureUserData) contact.FixtureB.UserData;
 
-            if(fudA == null || fudB == null)
+            if ((fudA == null) || (fudB == null))
                 return;
 
-            if (fudA.Type == FixtureUserDataType.CarTire && fudB.Type == FixtureUserDataType.GroundArea)
+            if ((fudA.Type == FixtureUserDataType.CarTire) && (fudB.Type == FixtureUserDataType.GroundArea))
                 TireVsGroundArea(contact.FixtureA, contact.FixtureB, began);
-            else if (fudA.Type == FixtureUserDataType.GroundArea && fudB.Type == FixtureUserDataType.CarTire)
+            else if ((fudA.Type == FixtureUserDataType.GroundArea) && (fudB.Type == FixtureUserDataType.CarTire))
                 TireVsGroundArea(contact.FixtureB, contact.FixtureA, began);
-
         }
 
         private void TireVsGroundArea(Fixture tireFixture, Fixture groundFixture, bool began)
         {
-            var tire = (Tire)tireFixture.Body.UserData;
+            var tire = (Tire) tireFixture.Body.UserData;
             if (began)
-            {
-                tire.AddGroundArea((GroundAreaUserData)groundFixture.UserData);
-            }
+                tire.AddGroundArea((GroundAreaUserData) groundFixture.UserData);
             else
-            {
-                tire.RemoveGroundArea((GroundAreaUserData)groundFixture.UserData);
-            }
+                tire.RemoveGroundArea((GroundAreaUserData) groundFixture.UserData);
         }
 
         /// <summary>

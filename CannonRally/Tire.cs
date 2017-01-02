@@ -24,13 +24,12 @@ namespace CannonRally
         public Tire(Body body, Sprite sprite)
         {
             Body = body;
+            Body.BodyType = BodyType.Dynamic;
+            Body.UserData = this;
             Sprite = sprite;
 
             _groundAreas = new List<GroundAreaUserData>();
             _traction = 1.0f;
-
-            Body.BodyType = BodyType.Dynamic;
-            body.UserData = this;
         }
 
         public Vector2 Position { get; set; }
