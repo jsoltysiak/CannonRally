@@ -19,7 +19,6 @@ namespace CannonRally
         private readonly GraphicsDeviceManager _graphics;
         private DebugViewXNA _debugView;
         private SpriteBatch _spriteBatch;
-        private Tire _tire;
         private Car _car;
         private World _world;
 
@@ -37,18 +36,16 @@ namespace CannonRally
         /// </summary>
         protected override void Initialize()
         {
-            _world = new World(Vector2.Zero);
-            _world.ContactManager.BeginContact = BeginContact;
-            _world.ContactManager.EndContact = EndContact;
-
-            if (_debugView == null)
+            _world = new World(Vector2.Zero)
             {
-                _debugView = new DebugViewXNA(_world);
-                _debugView.RemoveFlags(DebugViewFlags.Controllers);
-                _debugView.RemoveFlags(DebugViewFlags.Joint);
-                _debugView.AppendFlags(DebugViewFlags.PolygonPoints);
-                _debugView.AppendFlags(DebugViewFlags.DebugPanel);
-            }
+                ContactManager =
+                {
+                    BeginContact = BeginContact,
+                    EndContact = EndContact
+                }
+            };
+
+            _debugView = _debugView ?? new DebugViewXNA(_world);
 
             base.Initialize();
         }
@@ -63,16 +60,10 @@ namespace CannonRally
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
-            _tire =
-                new Tire(
-                    BodyFactory.CreateRoundedRectangle(_world, ConvertUnits.ToSimUnits(tireSprite.Texture.Width),
-                        ConvertUnits.ToSimUnits(tireSprite.Texture.Height), 0.1f, 0.1f, 0, 1f, new Vector2(1, 2),
-                        userData: new TireUserData()), tireSprite);
+            _car = new Car(_world, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
-
-            _car = new Car(_world, tireSprite);
 
             _debugView.LoadContent(GraphicsDevice, Content);
         }
@@ -132,7 +123,6 @@ namespace CannonRally
                 Exit();
 
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
-            _tire.Update(gameTime);
 
             _car.Update(gameTime);
 
@@ -154,7 +144,7 @@ namespace CannonRally
                 ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width),
                 ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height), 0f, 0f,
                 1f);
-            _tire.Draw(_spriteBatch);
+            _car.Draw(_spriteBatch);
             _spriteBatch.End();
             _debugView.RenderDebugData(ref projection);
             base.Draw(gameTime);

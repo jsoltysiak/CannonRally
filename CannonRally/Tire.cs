@@ -40,7 +40,6 @@ namespace CannonRally
         {
             UpdateFriction();
             UpdateDrive();
-            UpdateTurn();
         }
 
         public void AddGroundArea(GroundAreaUserData ground)
@@ -92,18 +91,6 @@ namespace CannonRally
                 return;
 
             Body.ApplyForce(force*currentForwardNormal, Body.WorldCenter);
-        }
-
-        private void UpdateTurn()
-        {
-            var desiredTorque = 0.0f;
-            var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.A))
-                desiredTorque = -MaxTorque;
-            else if (keyboardState.IsKeyDown(Keys.D))
-                desiredTorque = MaxTorque;
-
-            Body.ApplyTorque(desiredTorque);
         }
 
         public void Draw(SpriteBatch spriteBatch)
