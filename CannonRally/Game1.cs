@@ -20,6 +20,7 @@ namespace CannonRally
         private DebugViewXNA _debugView;
         private SpriteBatch _spriteBatch;
         private Tire _tire;
+        private Car _car;
         private World _world;
 
         public Game1()
@@ -70,6 +71,8 @@ namespace CannonRally
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
+
+            _car = new Car(_world, tireSprite);
 
             _debugView.LoadContent(GraphicsDevice, Content);
         }
@@ -130,6 +133,8 @@ namespace CannonRally
 
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
             _tire.Update(gameTime);
+
+            _car.Update(gameTime);
 
             base.Update(gameTime);
         }

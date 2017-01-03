@@ -38,6 +38,7 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Car.cs" />
     <Compile Include="FixtureUserData\FixtureUserData.cs" />
     <Compile Include="FixtureUserData\GroundAreaUserData.cs" />
     <Compile Include="FixtureUserData\TireUserData.cs" />
