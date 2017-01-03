@@ -15,7 +15,6 @@ namespace CannonRally
         private const float MaxForwardSpeed = 5f;
         private const float MaxBackwardSpeed = -5f;
         private const float MaxDriveForce = 5f;
-        private const float MaxTorque = 0.3f;
         private const float MaxLateralImpulse = 0.1f;
 
         private readonly IList<GroundAreaUserData> _groundAreas;
