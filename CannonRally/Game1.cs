@@ -19,11 +19,12 @@ namespace CannonRally
     public class Game1 : Game
     {
         private readonly GraphicsDeviceManager _graphics;
+        private Camera2D _camera;
+        private Car _car;
         private DebugViewXNA _debugView;
         private SpriteBatch _spriteBatch;
-        private Car _car;
+        private Vector3 _translateCenter;
         private World _world;
-        private Camera2D _camera;
 
         public Game1()
         {
@@ -53,6 +54,11 @@ namespace CannonRally
             ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 800, 480);
             _camera = new Camera2D(viewportAdapter);
             _camera.ZoomOut(0.7f);
+
+            _translateCenter =
+                new Vector3(
+                    new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width/2f),
+                        ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height/2f)), 0f);
             base.Initialize();
         }
 
@@ -143,8 +149,18 @@ namespace CannonRally
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             var transformMatrix = _camera.GetViewMatrix();
-            _spriteBatch.Begin(transformMatrix: transformMatrix);
 
+            _spriteBatch.Begin(transformMatrix: transformMatrix);
+            _car.Draw(_spriteBatch);
+            _spriteBatch.End();
+
+            RenderSimulationDebugView();
+
+            base.Draw(gameTime);
+        }
+
+        private void RenderSimulationDebugView()
+        {
             var projection = Matrix.CreateOrthographicOffCenter(
                 0f,
                 ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width),
@@ -153,18 +169,23 @@ namespace CannonRally
                 0f,
                 1f);
 
-            _car.Draw(_spriteBatch);
-            _spriteBatch.End();
 
-            Matrix matRotation = Matrix.CreateRotationZ(_camera.Rotation);
-            Matrix matZoom = Matrix.CreateScale(_camera.Zoom);
-            Vector3 translateCenter = new Vector3(new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width / 2f), ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height / 2f)), 0f);
-            Vector3 translateBody = new Vector3(-new Vector2(ConvertUnits.ToSimUnits(_camera.Position.X + GraphicsDevice.Viewport.Width / 2f), ConvertUnits.ToSimUnits(_camera.Position.Y + GraphicsDevice.Viewport.Height / 2f)), 0f);
+            var simView = GetSimulationView();
 
-            var SimView = Matrix.CreateTranslation(translateBody) * matRotation * matZoom * Matrix.CreateTranslation(translateCenter);
+            _debugView.RenderDebugData(projection, simView);
+        }
 
-            _debugView.RenderDebugData(projection, SimView);
-            base.Draw(gameTime);
+        private Matrix GetSimulationView()
+        {
+            var matRotation = Matrix.CreateRotationZ(_camera.Rotation);
+            var matZoom = Matrix.CreateScale(_camera.Zoom);
+            var translateBody =
+                new Vector3(
+                    -new Vector2(ConvertUnits.ToSimUnits(_camera.Position.X),
+                        ConvertUnits.ToSimUnits(_camera.Position.Y)), 0f);
+
+            return Matrix.CreateTranslation(-_translateCenter + translateBody)*matRotation*matZoom*
+                   Matrix.CreateTranslation(_translateCenter);
         }
     }
 }
