@@ -8,6 +8,8 @@ using FarseerPhysics.Factories;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
+using MonoGame.Extended.ViewportAdapters;
 
 namespace CannonRally
 {
@@ -21,6 +23,7 @@ namespace CannonRally
         private SpriteBatch _spriteBatch;
         private Car _car;
         private World _world;
+        private Camera2D _camera;
 
         public Game1()
         {
@@ -47,6 +50,9 @@ namespace CannonRally
 
             _debugView = _debugView ?? new DebugViewXNA(_world);
 
+            ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 800, 480);
+            _camera = new Camera2D(viewportAdapter);
+            _camera.ZoomOut(0.7f);
             base.Initialize();
         }
 
@@ -125,7 +131,6 @@ namespace CannonRally
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
 
             _car.Update(gameTime);
-
             base.Update(gameTime);
         }
 
@@ -137,16 +142,28 @@ namespace CannonRally
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            _spriteBatch.Begin();
+            var transformMatrix = _camera.GetViewMatrix();
+            _spriteBatch.Begin(transformMatrix: transformMatrix);
 
             var projection = Matrix.CreateOrthographicOffCenter(
                 0f,
                 ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width),
-                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height), 0f, 0f,
+                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height),
+                0f,
+                0f,
                 1f);
+
             _car.Draw(_spriteBatch);
             _spriteBatch.End();
-            _debugView.RenderDebugData(ref projection);
+
+            Matrix matRotation = Matrix.CreateRotationZ(_camera.Rotation);
+            Matrix matZoom = Matrix.CreateScale(_camera.Zoom);
+            Vector3 translateCenter = new Vector3(new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width / 2f), ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height / 2f)), 0f);
+            Vector3 translateBody = new Vector3(-new Vector2(ConvertUnits.ToSimUnits(_camera.Position.X + GraphicsDevice.Viewport.Width / 2f), ConvertUnits.ToSimUnits(_camera.Position.Y + GraphicsDevice.Viewport.Height / 2f)), 0f);
+
+            var SimView = Matrix.CreateTranslation(translateBody) * matRotation * matZoom * Matrix.CreateTranslation(translateCenter);
+
+            _debugView.RenderDebugData(projection, SimView);
             base.Draw(gameTime);
         }
     }
