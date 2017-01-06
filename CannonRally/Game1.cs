@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.Sprites;
+using MonoGame.Extended.Tiled;
+using MonoGame.Extended.Tiled.Renderers;
 using MonoGame.Extended.ViewportAdapters;
 
 namespace CannonRally
@@ -26,6 +28,11 @@ namespace CannonRally
         private SpriteBatch _spriteBatch;
         private Vector3 _translateCenter;
         private World _world;
+
+        private SpriteFont _font;
+
+        private TiledMap _tiledMap;
+        private IMapRenderer _mapRenderer;
 
         public Game1()
         {
@@ -60,6 +67,8 @@ namespace CannonRally
                 new Vector3(
                     new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width/2f),
                         ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height/2f)), 0f);
+
+            _mapRenderer = new FullMapRenderer(GraphicsDevice);
             base.Initialize();
         }
 
@@ -77,8 +86,14 @@ namespace CannonRally
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
+            ground = BodyFactory.CreateCircle(_world, 3f, 0, position: new Vector2(1f), userData: new GroundAreaUserData(0.2f, false));
+            ground.IsSensor = true;
 
+            _font = Content.Load<SpriteFont>("Font");
             _debugView.LoadContent(GraphicsDevice, Content);
+
+            _tiledMap = Content.Load<TiledMap>("level01");
+            _mapRenderer.SwapMap(_tiledMap);
         }
 
         private void EndContact(Contact contact)
@@ -138,6 +153,7 @@ namespace CannonRally
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
 
             _car.Update(gameTime);
+            _camera.LookAt(ConvertUnits.ToDisplayUnits(_car.Body.Position));
             base.Update(gameTime);
         }
 
@@ -151,11 +167,17 @@ namespace CannonRally
 
             var transformMatrix = _camera.GetViewMatrix();
 
+            _mapRenderer.Draw(transformMatrix);
+
             _spriteBatch.Begin(transformMatrix: transformMatrix);
-            _car.Draw(_spriteBatch);
+            _car.Draw(_spriteBatch, _font);
             _spriteBatch.End();
 
             RenderSimulationDebugView();
+
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString(_font, $"{_car.FrontTires[0].Traction}", new Vector2(0, 0), Color.White);
+            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
