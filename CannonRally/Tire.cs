@@ -6,6 +6,7 @@ using FarseerPhysics.Dynamics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended.Sprites;
 
 namespace CannonRally
 {
@@ -18,7 +19,7 @@ namespace CannonRally
         private const float MaxLateralImpulse = 0.1f;
 
         private readonly IList<GroundAreaUserData> _groundAreas;
-        private float _traction;
+        public float Traction { get; private set; }
 
         public Tire(Body body, Sprite sprite)
         {
@@ -28,7 +29,7 @@ namespace CannonRally
             Sprite = sprite;
 
             _groundAreas = new List<GroundAreaUserData>();
-            _traction = 1.0f;
+            Traction = 1.0f;
         }
 
         public Vector2 Position { get; set; }
@@ -57,14 +58,14 @@ namespace CannonRally
         {
             if (_groundAreas.Count == 0)
             {
-                _traction = 1;
+                Traction = 1;
             }
             else
             {
-                _traction = 0;
+                Traction = 0;
                 foreach (var groundArea in _groundAreas)
-                    if (groundArea.FrictionModifier > _traction)
-                        _traction = groundArea.FrictionModifier;
+                    if (groundArea.FrictionModifier > Traction)
+                        Traction = groundArea.FrictionModifier;
             }
         }
 
@@ -94,7 +95,7 @@ namespace CannonRally
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Sprite.Texture, ConvertUnits.ToDisplayUnits(Body.Position), null, Color.White,
+            spriteBatch.Draw(Sprite.TextureRegion.Texture, ConvertUnits.ToDisplayUnits(Body.Position), null, Color.White,
                 Body.Rotation, Sprite.Origin, 1f, SpriteEffects.None, 0f);
         }
 
@@ -103,13 +104,13 @@ namespace CannonRally
             var impulse = Body.Mass*-GetLateralVelocity();
             if (impulse.Length() > MaxLateralImpulse)
                 impulse *= MaxLateralImpulse/impulse.Length();
-            Body.ApplyLinearImpulse(_traction*impulse, Body.WorldCenter);
-            Body.ApplyAngularImpulse(_traction*0.1f*Body.Inertia*-Body.AngularVelocity);
+            Body.ApplyLinearImpulse(Traction*impulse, Body.WorldCenter);
+            Body.ApplyAngularImpulse(Traction*0.1f*Body.Inertia*-Body.AngularVelocity);
 
             var currentForwardNormal = GetForwardVelocity();
             if (Math.Abs(currentForwardNormal.Length()) > 1) currentForwardNormal.Normalize();
             var dragForceMagniture = currentForwardNormal*-DragForceMultiplier;
-            Body.ApplyForce(_traction*dragForceMagniture, Body.WorldCenter);
+            Body.ApplyForce(Traction*dragForceMagniture, Body.WorldCenter);
         }
 
         private Vector2 GetLateralVelocity()
