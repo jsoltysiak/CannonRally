@@ -48,6 +48,8 @@ namespace CannonRally
         /// </summary>
         protected override void Initialize()
         {
+            Window.AllowUserResizing = true;
+
             _world = new World(Vector2.Zero)
             {
                 ContactManager =
@@ -58,10 +60,11 @@ namespace CannonRally
             };
 
             _debugView = _debugView ?? new DebugViewXNA(_world);
+            _debugView.Enabled = false;
 
-            ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 800, 480);
+            ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
             _camera = new Camera2D(viewportAdapter);
-            _camera.ZoomOut(0.7f);
+            _camera.ZoomOut(0.4f);
 
             _translateCenter =
                 new Vector3(
@@ -82,7 +85,8 @@ namespace CannonRally
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
-            _car = new Car(_world, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
+            var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_small_5"));
+            _car = new Car(_world, carSprite, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;

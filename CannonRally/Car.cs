@@ -23,32 +23,25 @@ namespace CannonRally
         public readonly IList<Tire> FrontTires;
         public readonly IList<Tire> RearTires;
 
-        public Car(World world, Sprite tireSprite)
+        private readonly Sprite _hullSprite;
+
+        public Car(World world, Sprite hullSprite, Sprite tireSprite)
         {
             FrontTires = new List<Tire>();
             RearTires = new List<Tire>();
+            _hullSprite = hullSprite;
 
-            var vertices = new Vertices
-            {
-                new Vector2(.5f, 0),
-                new Vector2(.5f, 1f),
-                new Vector2(.5f, 2f),
-                new Vector2(.25f, 3),
-                new Vector2(-.25f, 3),
-                new Vector2(-.5f, 2f),
-                new Vector2(-.5f, 1f),
-                new Vector2(-.5f, 0)
-            };
-
-            Body = BodyFactory.CreatePolygon(world, vertices, 1.0f);
+            Body = BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Width),
+                    ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f);
             Body.BodyType = BodyType.Dynamic;
+
 
             var tire = new Tire(
                 BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f,
+                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
                     userData: new TireUserData()), tireSprite);
 
-            var joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.5f, 2.5f), Vector2.Zero);
+            var joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.15f, -0.18f), Vector2.Zero);
             joint.LimitEnabled = true;
             joint.SetLimits(0, 0);
 
@@ -57,10 +50,10 @@ namespace CannonRally
 
             tire = new Tire(
                 BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f,
+                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
                     userData: new TireUserData()), tireSprite);
 
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.5f, 2.5f), Vector2.Zero);
+            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.15f, -0.18f), Vector2.Zero);
             joint.LimitEnabled = true;
             joint.SetLimits(0, 0);
 
@@ -69,10 +62,10 @@ namespace CannonRally
 
             tire = new Tire(
                 BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f,
+                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
                     userData: new TireUserData()), tireSprite);
 
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.5f, 0.5f), Vector2.Zero);
+            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.15f, 0.18f), Vector2.Zero);
             joint.LimitEnabled = true;
             joint.SetLimits(0, 0);
 
@@ -80,10 +73,10 @@ namespace CannonRally
 
             tire = new Tire(
                 BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f,
+                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
                     userData: new TireUserData()), tireSprite);
 
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.5f, 0.5f), Vector2.Zero);
+            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.15f, 0.18f), Vector2.Zero);
             joint.LimitEnabled = true;
             joint.SetLimits(0, 0);
 
@@ -113,6 +106,9 @@ namespace CannonRally
                 frontTire.Update(gameTime);
             foreach (var rearTire in RearTires)
                 rearTire.Update(gameTime);
+
+            _hullSprite.Rotation = Body.Rotation;
+            _hullSprite.Position = ConvertUnits.ToDisplayUnits(Body.Position);
         }
 
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -121,6 +117,8 @@ namespace CannonRally
                 frontTire.Draw(spriteBatch);
             foreach (var rearTire in RearTires)
                 rearTire.Draw(spriteBatch);
+
+            _hullSprite.Draw(spriteBatch);
         }
     }
 }

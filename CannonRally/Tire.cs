@@ -79,7 +79,7 @@ namespace CannonRally
                 desiredSpeed = MaxBackwardSpeed;
             else return;
 
-            var currentForwardNormal = Body.GetWorldVector(new Vector2(0, 1));
+            var currentForwardNormal = Body.GetWorldVector(new Vector2(0, -1));
             var currentSpeed = Vector2.Dot(GetForwardVelocity(), currentForwardNormal);
 
             float force = 0;
