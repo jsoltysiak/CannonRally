@@ -90,9 +90,9 @@ namespace CannonRally
             float desiredAngle = 0;
 
             var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.A))
+            if (keyboardState.IsKeyDown(Keys.A) || keyboardState.IsKeyDown(Keys.Left))
                 desiredAngle = -LockAngle;
-            else if (keyboardState.IsKeyDown(Keys.D))
+            else if (keyboardState.IsKeyDown(Keys.D) || keyboardState.IsKeyDown(Keys.Right))
                 desiredAngle = LockAngle;
 
             var angleNow = _frontLeftJoint.JointAngle;

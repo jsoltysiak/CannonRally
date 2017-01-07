@@ -73,9 +73,9 @@ namespace CannonRally
         {
             var desiredSpeed = 0.0f;
             var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.W))
+            if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
                 desiredSpeed = MaxForwardSpeed;
-            else if (keyboardState.IsKeyDown(Keys.S))
+            else if (keyboardState.IsKeyDown(Keys.S) || keyboardState.IsKeyDown(Keys.Down))
                 desiredSpeed = MaxBackwardSpeed;
             else return;
 
