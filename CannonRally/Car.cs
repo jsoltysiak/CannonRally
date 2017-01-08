@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using CannonRally.FixtureUserData;
 using FarseerPhysics;
 using FarseerPhysics.Common;
@@ -20,70 +19,56 @@ namespace CannonRally
         private const float TurnPerTimeStep = TurnSpeedPerSec/60f;
         private readonly RevoluteJoint _frontLeftJoint;
         private readonly RevoluteJoint _frontRightJoint;
+
+        private readonly Sprite _hullSprite;
         public readonly IList<Tire> FrontTires;
         public readonly IList<Tire> RearTires;
 
-        private readonly Sprite _hullSprite;
-
         public Car(World world, Sprite hullSprite, Sprite tireSprite)
         {
-            FrontTires = new List<Tire>();
-            RearTires = new List<Tire>();
             _hullSprite = hullSprite;
 
             Body = BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f);
-            Body.BodyType = BodyType.Dynamic;
+                ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f, bodyType: BodyType.Dynamic);
 
-
-            var tire = new Tire(
-                BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
-                    userData: new TireUserData()), tireSprite);
-
-            var joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.15f, -0.18f), Vector2.Zero);
-            joint.LimitEnabled = true;
-            joint.SetLimits(0, 0);
-
+            FrontTires = new List<Tire>();
+            var tire = CreateTire(world, tireSprite);
             FrontTires.Add(tire);
+            var joint = CreateWheelJoint(world, tire.Body, new Vector2(-0.15f, -0.18f));
             _frontRightJoint = joint;
 
-            tire = new Tire(
-                BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
-                    userData: new TireUserData()), tireSprite);
-
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.15f, -0.18f), Vector2.Zero);
-            joint.LimitEnabled = true;
-            joint.SetLimits(0, 0);
-
+            tire = CreateTire(world, tireSprite);
             FrontTires.Add(tire);
+            joint = CreateWheelJoint(world, tire.Body, new Vector2(0.15f, -0.18f));
             _frontLeftJoint = joint;
 
-            tire = new Tire(
-                BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
-                    userData: new TireUserData()), tireSprite);
-
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(0.15f, 0.18f), Vector2.Zero);
-            joint.LimitEnabled = true;
-            joint.SetLimits(0, 0);
-
+            RearTires = new List<Tire>();
+            tire = CreateTire(world, tireSprite);
             RearTires.Add(tire);
+            CreateWheelJoint(world, tire.Body, new Vector2(0.15f, 0.18f));
 
-            tire = new Tire(
-                BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
-                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
-                    userData: new TireUserData()), tireSprite);
-
-            joint = JointFactory.CreateRevoluteJoint(world, Body, tire.Body, new Vector2(-0.15f, 0.18f), Vector2.Zero);
-            joint.LimitEnabled = true;
-            joint.SetLimits(0, 0);
-
+            tire = CreateTire(world, tireSprite);
             RearTires.Add(tire);
+            CreateWheelJoint(world, tire.Body, new Vector2(-0.15f, 0.18f));
         }
 
         public Body Body { get; }
+
+        private RevoluteJoint CreateWheelJoint(World world, Body tireBody, Vector2 anchorPosition)
+        {
+            var joint = JointFactory.CreateRevoluteJoint(world, Body, tireBody, anchorPosition, Vector2.Zero);
+            joint.LimitEnabled = true;
+            joint.SetLimits(0, 0);
+            return joint;
+        }
+
+        private static Tire CreateTire(World world, Sprite tireSprite)
+        {
+            return new Tire(
+                BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Width),
+                    ConvertUnits.ToSimUnits(tireSprite.TextureRegion.Height), 0.02f, 0.02f, 0, 1f,
+                    userData: new TireUserData()), tireSprite);
+        }
 
         public void Update(GameTime gameTime)
         {
