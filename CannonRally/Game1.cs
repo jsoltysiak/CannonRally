@@ -60,6 +60,7 @@ namespace CannonRally
             };
 
             _debugView = _debugView ?? new DebugViewXNA(_world);
+            _debugView.AppendFlags(DebugViewFlags.DebugPanel);
             _debugView.Enabled = false;
 
             ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
@@ -87,6 +88,7 @@ namespace CannonRally
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_small_5"));
             _car = new Car(_world, carSprite, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
+            _car.CarBehavior = new ManualCarBehavior(_car);
 
             var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;

@@ -12,11 +12,9 @@ namespace CannonRally
 {
     public class Tire
     {
-        private const float DragForceMultiplier = 2f;
-        private const float MaxForwardSpeed = 5f;
-        private const float MaxBackwardSpeed = -5f;
-        private const float MaxDriveForce = 5f;
-        private const float MaxLateralImpulse = 0.1f;
+        public float DragForceMultiplier { get; } = 1f;
+        public float MaxDriveForce { get; } = 5f;
+        public float MaxLateralImpulse { get; } = 0.1f;
 
         private readonly IList<GroundAreaUserData> _groundAreas;
         public float Traction { get; private set; }
@@ -39,7 +37,6 @@ namespace CannonRally
         public void Update(GameTime gameTime)
         {
             UpdateFriction();
-            UpdateDrive();
         }
 
         public void AddGroundArea(GroundAreaUserData ground)
@@ -69,30 +66,6 @@ namespace CannonRally
             }
         }
 
-        private void UpdateDrive()
-        {
-            var desiredSpeed = 0.0f;
-            var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
-                desiredSpeed = MaxForwardSpeed;
-            else if (keyboardState.IsKeyDown(Keys.S) || keyboardState.IsKeyDown(Keys.Down))
-                desiredSpeed = MaxBackwardSpeed;
-            else return;
-
-            var currentForwardNormal = Body.GetWorldVector(new Vector2(0, -1));
-            var currentSpeed = Vector2.Dot(GetForwardVelocity(), currentForwardNormal);
-
-            float force = 0;
-            if (desiredSpeed > currentSpeed)
-                force = MaxDriveForce;
-            else if (desiredSpeed < currentSpeed)
-                force = -MaxDriveForce;
-            else
-                return;
-
-            Body.ApplyForce(force*currentForwardNormal, Body.WorldCenter);
-        }
-
         public void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(Sprite.TextureRegion.Texture, ConvertUnits.ToDisplayUnits(Body.Position), null, Color.White,
@@ -119,7 +92,7 @@ namespace CannonRally
             return Vector2.Dot(currentRightNormal, Body.LinearVelocity)*currentRightNormal;
         }
 
-        private Vector2 GetForwardVelocity()
+        public Vector2 GetForwardVelocity()
         {
             var currentForwardNormal = Body.GetWorldVector(new Vector2(0, 1));
             return Vector2.Dot(currentForwardNormal, Body.LinearVelocity)*currentForwardNormal;

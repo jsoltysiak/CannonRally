@@ -43,6 +43,8 @@
     <Compile Include="FixtureUserData\GroundAreaUserData.cs" />
     <Compile Include="FixtureUserData\TireUserData.cs" />
     <Compile Include="Game1.cs" />
+    <Compile Include="ICarBehavior.cs" />
+    <Compile Include="ManualCarBehavior.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tire.cs" />

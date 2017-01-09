@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CannonRally.FixtureUserData;
 using FarseerPhysics;
 using FarseerPhysics.Common;
@@ -12,11 +13,11 @@ using MonoGame.Extended.Sprites;
 
 namespace CannonRally
 {
-    internal class Car
+    public class Car
     {
-        private const float LockAngle = 40f*MathHelper.Pi/180f;
-        private const float TurnSpeedPerSec = 320*MathHelper.Pi/180f;
-        private const float TurnPerTimeStep = TurnSpeedPerSec/60f;
+        public const float LockAngle = 40f*MathHelper.Pi/180f;
+        public const float TurnSpeedPerSec = 320*MathHelper.Pi/180f;
+        public const float TurnPerTimeStep = TurnSpeedPerSec/60f;
         private readonly RevoluteJoint _frontLeftJoint;
         private readonly RevoluteJoint _frontRightJoint;
 
@@ -24,9 +25,15 @@ namespace CannonRally
         public readonly IList<Tire> FrontTires;
         public readonly IList<Tire> RearTires;
 
+        public float MaxForwardSpeed { get; } = 5f;
+        public float MaxBackwardSpeed { get; } = -5f;
+
+        public ICarBehavior CarBehavior { get; set; }
+
         public Car(World world, Sprite hullSprite, Sprite tireSprite)
         {
             _hullSprite = hullSprite;
+
 
             Body = BodyFactory.CreateRoundedRectangle(world, ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Width),
                 ConvertUnits.ToSimUnits(_hullSprite.TextureRegion.Height), 0.1f, 0.1f, 0, 1f, bodyType: BodyType.Dynamic);
@@ -72,28 +79,53 @@ namespace CannonRally
 
         public void Update(GameTime gameTime)
         {
-            float desiredAngle = 0;
+            if (CarBehavior != null)
+            {
+                float desiredAngle = CarBehavior.GetDesiredWheelAngle();
 
-            var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.A) || keyboardState.IsKeyDown(Keys.Left))
-                desiredAngle = -LockAngle;
-            else if (keyboardState.IsKeyDown(Keys.D) || keyboardState.IsKeyDown(Keys.Right))
-                desiredAngle = LockAngle;
+                var angleNow = _frontLeftJoint.JointAngle;
+                var angleToTurn = desiredAngle - angleNow;
+                angleToTurn = MathUtils.Clamp(angleToTurn, -TurnPerTimeStep, TurnPerTimeStep);
+                var newAngle = angleNow + angleToTurn;
+                _frontLeftJoint.SetLimits(newAngle, newAngle);
+                _frontRightJoint.SetLimits(newAngle, newAngle);
 
-            var angleNow = _frontLeftJoint.JointAngle;
-            var angleToTurn = desiredAngle - angleNow;
-            angleToTurn = MathUtils.Clamp(angleToTurn, -TurnPerTimeStep, TurnPerTimeStep);
-            var newAngle = angleNow + angleToTurn;
-            _frontLeftJoint.SetLimits(newAngle, newAngle);
-            _frontRightJoint.SetLimits(newAngle, newAngle);
-
-            foreach (var frontTire in FrontTires)
-                frontTire.Update(gameTime);
-            foreach (var rearTire in RearTires)
-                rearTire.Update(gameTime);
+                foreach (var frontTire in FrontTires)
+                {
+                    frontTire.Update(gameTime);
+                    UpdateDrive(frontTire);
+                }
+                foreach (var rearTire in RearTires)
+                {
+                    rearTire.Update(gameTime);
+                    //UpdateDrive(rearTire);
+                }
+            }
 
             _hullSprite.Rotation = Body.Rotation;
             _hullSprite.Position = ConvertUnits.ToDisplayUnits(Body.Position);
+        }
+
+        private void UpdateDrive(Tire tire)
+        {
+            var desiredSpeed = CarBehavior.GetDesiredSpeed();
+
+            if (Math.Abs(desiredSpeed) > Single.Epsilon)
+            {
+
+                var currentForwardNormal = tire.Body.GetWorldVector(new Vector2(0, -1));
+                var currentSpeed = Vector2.Dot(tire.GetForwardVelocity(), currentForwardNormal);
+
+                float force = 0;
+                if (desiredSpeed > currentSpeed)
+                    force = tire.MaxDriveForce;
+                else if (desiredSpeed < currentSpeed)
+                    force = -tire.MaxDriveForce;
+                else
+                    return;
+
+                tire.Body.ApplyForce(force*currentForwardNormal, Body.WorldCenter);
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
