@@ -100,6 +100,18 @@ namespace CannonRally
 
             _tiledMap = Content.Load<TiledMap>("level01");
             _mapRenderer.SwapMap(_tiledMap);
+
+            var pathPolyline = (PolylineF) _tiledMap?.GetObjectGroup("path")?.Objects?.First()?.Shape;
+
+            List<Vector2> vertextes = new List<Vector2>();
+            if (pathPolyline != null)
+            {
+                foreach (var point in pathPolyline.Points)
+                {
+                    vertextes.Add(ConvertUnits.ToSimUnits(point));
+                }
+            }
+            Path path = new Path(vertextes.ToArray());
         }
 
         private void EndContact(Contact contact)

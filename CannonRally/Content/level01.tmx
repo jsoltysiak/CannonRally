@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="128" tileheight="128" nextobjectid="1">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="128" tileheight="128" nextobjectid="2">
  <tileset firstgid="1" name="Roads" tilewidth="128" tileheight="128" spacing="2" tilecount="315" columns="21">
   <image source="roads.png" width="2729" height="1949"/>
  </tileset>
@@ -43,4 +43,9 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup name="path">
+  <object id="1" x="500" y="256">
+   <polyline points="0,0 632,8 656,284 664,608 1144,648 1176,960 1136,1280 712,1300 224,1300 -116,1232 -120,924 128,880 128,600 132,260 -108,220 -97.8986,65.2754"/>
+  </object>
+ </objectgroup>
 </map>
