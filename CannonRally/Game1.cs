@@ -98,20 +98,20 @@ namespace CannonRally
             _font = Content.Load<SpriteFont>("Font");
             _debugView.LoadContent(GraphicsDevice, Content);
 
-            _tiledMap = Content.Load<TiledMap>("level01");
+            var tiledMap = Content.Load<TiledMap>("level01");
             _mapRenderer.SwapMap(_tiledMap);
+            var path = GetPath(tiledMap, "path");
+        }
 
-            var pathPolyline = (PolylineF) _tiledMap?.GetObjectGroup("path")?.Objects?.First()?.Shape;
+        private static Path GetPath(TiledMap tiledMap, string pathLayerName)
+        {
+            var pathPolyline = (PolylineF) tiledMap?.GetObjectGroup(pathLayerName)?.Objects?.First()?.Shape;
 
-            List<Vector2> vertextes = new List<Vector2>();
-            if (pathPolyline != null)
+            if (pathPolyline == null || !pathPolyline.Points.Any())
             {
-                foreach (var point in pathPolyline.Points)
-                {
-                    vertextes.Add(ConvertUnits.ToSimUnits(point));
-                }
+                throw new Exception("Level path not found.");
             }
-            Path path = new Path(vertextes.ToArray());
+            return new Path(pathPolyline.Points.Select(ConvertUnits.ToSimUnits).ToArray());
         }
 
         private void EndContact(Contact contact)
