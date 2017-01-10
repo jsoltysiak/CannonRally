@@ -5,19 +5,13 @@ using FarseerPhysics;
 using FarseerPhysics.Dynamics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Sprites;
 
 namespace CannonRally
 {
     public class Tire
     {
-        public float DragForceMultiplier { get; } = 1f;
-        public float MaxDriveForce { get; } = 5f;
-        public float MaxLateralImpulse { get; } = 0.1f;
-
         private readonly IList<GroundAreaUserData> _groundAreas;
-        public float Traction { get; private set; }
 
         public Tire(Body body, Sprite sprite)
         {
@@ -29,6 +23,11 @@ namespace CannonRally
             _groundAreas = new List<GroundAreaUserData>();
             Traction = 1.0f;
         }
+
+        public float DragForceMultiplier { get; } = 5f;
+        public float MaxDriveForce { get; } = 30f;
+        public float MaxLateralImpulse { get; } = 1.5f;
+        public float Traction { get; private set; }
 
         public Vector2 Position { get; set; }
         public Body Body { get; set; }
@@ -61,41 +60,57 @@ namespace CannonRally
             {
                 Traction = 0;
                 foreach (var groundArea in _groundAreas)
+                {
                     if (groundArea.FrictionModifier > Traction)
+                    {
                         Traction = groundArea.FrictionModifier;
+                    }
+                }
             }
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Sprite.TextureRegion.Texture, ConvertUnits.ToDisplayUnits(Body.Position), null, Color.White,
-                Body.Rotation, Sprite.Origin, 1f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(Sprite.TextureRegion.Texture,
+                             ConvertUnits.ToDisplayUnits(Body.Position),
+                             null,
+                             Color.White,
+                             Body.Rotation,
+                             Sprite.Origin,
+                             1f,
+                             SpriteEffects.None,
+                             0f);
         }
 
         private void UpdateFriction()
         {
-            var impulse = Body.Mass*-GetLateralVelocity();
+            var impulse = Body.Mass * -GetLateralVelocity();
             if (impulse.Length() > MaxLateralImpulse)
-                impulse *= MaxLateralImpulse/impulse.Length();
-            Body.ApplyLinearImpulse(Traction*impulse, Body.WorldCenter);
-            Body.ApplyAngularImpulse(Traction*0.1f*Body.Inertia*-Body.AngularVelocity);
+            {
+                impulse *= MaxLateralImpulse / impulse.Length();
+            }
+            Body.ApplyLinearImpulse(Traction * impulse, Body.WorldCenter);
+            Body.ApplyAngularImpulse(Traction * 0.1f * Body.Inertia * -Body.AngularVelocity);
 
             var currentForwardNormal = GetForwardVelocity();
-            if (Math.Abs(currentForwardNormal.Length()) > 1) currentForwardNormal.Normalize();
-            var dragForceMagniture = currentForwardNormal*-DragForceMultiplier;
-            Body.ApplyForce(Traction*dragForceMagniture, Body.WorldCenter);
+            if (Math.Abs(currentForwardNormal.Length()) > 1)
+            {
+                currentForwardNormal.Normalize();
+            }
+            var dragForceMagniture = currentForwardNormal * -DragForceMultiplier;
+            Body.ApplyForce(Traction * dragForceMagniture, Body.WorldCenter);
         }
 
         private Vector2 GetLateralVelocity()
         {
             var currentRightNormal = Body.GetWorldVector(new Vector2(1, 0));
-            return Vector2.Dot(currentRightNormal, Body.LinearVelocity)*currentRightNormal;
+            return Vector2.Dot(currentRightNormal, Body.LinearVelocity) * currentRightNormal;
         }
 
         public Vector2 GetForwardVelocity()
         {
             var currentForwardNormal = Body.GetWorldVector(new Vector2(0, 1));
-            return Vector2.Dot(currentForwardNormal, Body.LinearVelocity)*currentForwardNormal;
+            return Vector2.Dot(currentForwardNormal, Body.LinearVelocity) * currentForwardNormal;
         }
     }
 }

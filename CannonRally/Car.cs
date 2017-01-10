@@ -59,7 +59,7 @@ namespace CannonRally
             CreateWheelJoint(world, tire.Body, new Vector2(-0.7f, 1f));
         }
 
-        public float MaxForwardSpeed { get; } = 5f;
+        public float MaxForwardSpeed { get; } = 25f;
         public float MaxBackwardSpeed { get; } = -5f;
 
         public ICarBehavior CarBehavior { get; set; }
