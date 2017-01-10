@@ -38,6 +38,8 @@ namespace CannonRally
         private TiledMap _tiledMap;
         private IMapRenderer _mapRenderer;
 
+        private KeyboardState _oldKeyboardState = Keyboard.GetState();
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -170,9 +172,17 @@ namespace CannonRally
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            var keyboardState = Keyboard.GetState();
             if ((GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed) ||
-                Keyboard.GetState().IsKeyDown(Keys.Escape))
+                keyboardState.IsKeyDown(Keys.Escape))
+            {
                 Exit();
+            }
+
+            if (keyboardState.IsKeyDown(Keys.F10) && _oldKeyboardState.IsKeyUp(Keys.F10))
+            {
+                _debugView.Enabled = !_debugView.Enabled;
+            }
 
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
 
@@ -181,6 +191,7 @@ namespace CannonRally
 
             _fpsCounter.Update(gameTime);
 
+            _oldKeyboardState = keyboardState;
             base.Update(gameTime);
         }
 
