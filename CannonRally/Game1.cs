@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using CannonRally.FixtureUserData;
 using FarseerPhysics;
 using FarseerPhysics.DebugView;
@@ -9,6 +11,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
+using MonoGame.Extended.Shapes;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.Tiled;
 using MonoGame.Extended.Tiled.Renderers;
@@ -98,9 +101,9 @@ namespace CannonRally
             _font = Content.Load<SpriteFont>("Font");
             _debugView.LoadContent(GraphicsDevice, Content);
 
-            var tiledMap = Content.Load<TiledMap>("level01");
+            _tiledMap = Content.Load<TiledMap>("level01");
             _mapRenderer.SwapMap(_tiledMap);
-            var path = GetPath(tiledMap, "path");
+            var path = GetPath(_tiledMap, "path");
         }
 
         private static Path GetPath(TiledMap tiledMap, string pathLayerName)
