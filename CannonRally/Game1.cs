@@ -31,6 +31,7 @@ namespace CannonRally
         private SpriteBatch _spriteBatch;
         private Vector3 _translateCenter;
         private World _world;
+        private FramesPerSecondCounter _fpsCounter;
 
         private SpriteFont _font;
 
@@ -41,6 +42,8 @@ namespace CannonRally
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            _fpsCounter = new FramesPerSecondCounter();
         }
 
         /// <summary>
@@ -175,6 +178,9 @@ namespace CannonRally
 
             _car.Update(gameTime);
             _camera.LookAt(ConvertUnits.ToDisplayUnits(_car.Body.Position));
+
+            _fpsCounter.Update(gameTime);
+
             base.Update(gameTime);
         }
 
@@ -197,8 +203,10 @@ namespace CannonRally
             RenderSimulationDebugView();
 
             _spriteBatch.Begin();
-            _spriteBatch.DrawString(_font, $"{_car.FrontTires[0].Traction}", new Vector2(0, 0), Color.White);
+            _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.FramesPerSecond}", new Vector2(0, 0), Color.White);
             _spriteBatch.End();
+
+            _fpsCounter.Draw(gameTime);
 
             base.Draw(gameTime);
         }
