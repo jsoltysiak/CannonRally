@@ -27,6 +27,7 @@ namespace CannonRally
         private readonly GraphicsDeviceManager _graphics;
         private Camera2D _camera;
         private Car _car;
+        private Car _enemyCar;
         private DebugViewXNA _debugView;
 
         private SpriteFont _font;
@@ -72,8 +73,8 @@ namespace CannonRally
 
             ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window,
                                                                         GraphicsDevice,
-                                                                        GraphicsDevice.Viewport.Width * 2,
-                                                                        GraphicsDevice.Viewport.Height * 2);
+                                                                        GraphicsDevice.Viewport.Width*2,
+                                                                        GraphicsDevice.Viewport.Height*2);
             _camera = new Camera2D(viewportAdapter);
 
             _translateCenter =
@@ -97,9 +98,11 @@ namespace CannonRally
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_5"));
-            _car = new Car(_world, carSprite, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
+            _car = new Car(_world, carSprite, tireSprite);
             _car.CarBehavior = new ManualCarBehavior(_car);
 
+            var greenCarSprite = new Sprite(Content.Load<Texture2D>("car_green_2"));
+            _enemyCar = new Car(_world, greenCarSprite, tireSprite);
             var ground = BodyFactory.CreateCircle(_world, 10f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
             ground = BodyFactory.CreateCircle(_world,
@@ -203,6 +206,7 @@ namespace CannonRally
             _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f / 30f));
 
             _car.Update(gameTime);
+            _enemyCar.Update(gameTime);
             _camera.LookAt(ConvertUnits.ToDisplayUnits(_car.Body.Position));
 
             _fpsCounter.Update(gameTime);
@@ -224,13 +228,16 @@ namespace CannonRally
             _mapRenderer.Draw(transformMatrix);
 
             _spriteBatch.Begin(transformMatrix: transformMatrix);
-            _car.Draw(_spriteBatch, _font);
+            _car.Draw(_spriteBatch);
+            _enemyCar.Draw(_spriteBatch);
             _spriteBatch.End();
 
             RenderSimulationDebugView();
 
             _spriteBatch.Begin();
             _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.FramesPerSecond}", new Vector2(0, 0), Color.White);
+            _spriteBatch.DrawString(_font, $"CAR SIM POS: {_car.Body.Position}", new Vector2(0, 20), Color.White);
+            _spriteBatch.DrawString(_font, $"CAR POS: {ConvertUnits.ToDisplayUnits(_car.Body.Position)}", new Vector2(0, 40), Color.White);
             _spriteBatch.End();
 
             _fpsCounter.Draw(gameTime);

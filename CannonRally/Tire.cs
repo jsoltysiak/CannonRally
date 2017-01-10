@@ -29,7 +29,6 @@ namespace CannonRally
         public float MaxLateralImpulse { get; } = 1.5f;
         public float Traction { get; private set; }
 
-        public Vector2 Position { get; set; }
         public Body Body { get; set; }
         public Sprite Sprite { get; set; }
 

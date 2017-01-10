@@ -91,37 +91,37 @@ namespace CannonRally
 
         public void Update(GameTime gameTime)
         {
+            var desiredSpeed = 0f;
+            var desiredAngle = 0f;
             if (CarBehavior != null)
             {
-                var desiredAngle = CarBehavior.GetDesiredWheelAngle();
+                desiredSpeed = CarBehavior.GetDesiredSpeed();
+                desiredAngle = CarBehavior.GetDesiredWheelAngle();
+            }
+            var angleNow = _frontLeftJoint.JointAngle;
+            var angleToTurn = desiredAngle - angleNow;
+            angleToTurn = MathUtils.Clamp(angleToTurn, -TurnPerTimeStep, TurnPerTimeStep);
+            var newAngle = angleNow + angleToTurn;
+            _frontLeftJoint.SetLimits(newAngle, newAngle);
+            _frontRightJoint.SetLimits(newAngle, newAngle);
 
-                var angleNow = _frontLeftJoint.JointAngle;
-                var angleToTurn = desiredAngle - angleNow;
-                angleToTurn = MathUtils.Clamp(angleToTurn, -TurnPerTimeStep, TurnPerTimeStep);
-                var newAngle = angleNow + angleToTurn;
-                _frontLeftJoint.SetLimits(newAngle, newAngle);
-                _frontRightJoint.SetLimits(newAngle, newAngle);
-
-                foreach (var frontTire in FrontTires)
-                {
-                    frontTire.Update(gameTime);
-                    UpdateDrive(frontTire);
-                }
-                foreach (var rearTire in RearTires)
-                {
-                    rearTire.Update(gameTime);
-                    UpdateDrive(rearTire);
-                }
+            foreach (var frontTire in FrontTires)
+            {
+                frontTire.Update(gameTime);
+                UpdateDrive(frontTire, desiredSpeed);
+            }
+            foreach (var rearTire in RearTires)
+            {
+                rearTire.Update(gameTime);
+                UpdateDrive(rearTire, desiredSpeed);
             }
 
             _hullSprite.Rotation = Body.Rotation;
             _hullSprite.Position = ConvertUnits.ToDisplayUnits(Body.Position);
         }
 
-        private void UpdateDrive(Tire tire)
+        private void UpdateDrive(Tire tire, float desiredSpeed)
         {
-            var desiredSpeed = CarBehavior.GetDesiredSpeed();
-
             if (Math.Abs(desiredSpeed) > float.Epsilon)
             {
                 var currentForwardNormal = tire.Body.GetWorldVector(new Vector2(0, -1));
@@ -145,7 +145,7 @@ namespace CannonRally
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+        public void Draw(SpriteBatch spriteBatch)
         {
             foreach (var frontTire in FrontTires)
             {
