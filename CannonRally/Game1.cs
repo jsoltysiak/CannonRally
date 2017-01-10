@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using CannonRally.FixtureUserData;
 using FarseerPhysics;
@@ -24,21 +23,21 @@ namespace CannonRally
     /// </summary>
     public class Game1 : Game
     {
+        private readonly FramesPerSecondCounter _fpsCounter;
         private readonly GraphicsDeviceManager _graphics;
         private Camera2D _camera;
         private Car _car;
         private DebugViewXNA _debugView;
-        private SpriteBatch _spriteBatch;
-        private Vector3 _translateCenter;
-        private World _world;
-        private FramesPerSecondCounter _fpsCounter;
 
         private SpriteFont _font;
-
-        private TiledMap _tiledMap;
         private IMapRenderer _mapRenderer;
 
         private KeyboardState _oldKeyboardState = Keyboard.GetState();
+        private SpriteBatch _spriteBatch;
+
+        private TiledMap _tiledMap;
+        private Vector3 _translateCenter;
+        private World _world;
 
         public Game1()
         {
@@ -66,19 +65,22 @@ namespace CannonRally
                     EndContact = EndContact
                 }
             };
-
+            ConvertUnits.SetDisplayUnitToSimUnitRatio(32);
             _debugView = _debugView ?? new DebugViewXNA(_world);
             _debugView.AppendFlags(DebugViewFlags.DebugPanel);
             _debugView.Enabled = false;
 
-            ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            ViewportAdapter viewportAdapter = new BoxingViewportAdapter(Window,
+                                                                        GraphicsDevice,
+                                                                        GraphicsDevice.Viewport.Width * 2,
+                                                                        GraphicsDevice.Viewport.Height * 2);
             _camera = new Camera2D(viewportAdapter);
-            _camera.ZoomOut(0.4f);
 
             _translateCenter =
                 new Vector3(
-                    new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width/2f),
-                        ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height/2f)), 0f);
+                    new Vector2(ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Width / 2f),
+                                ConvertUnits.ToSimUnits(GraphicsDevice.Viewport.Height / 2f)),
+                    0f);
 
             _mapRenderer = new FullMapRenderer(GraphicsDevice);
             base.Initialize();
@@ -94,13 +96,17 @@ namespace CannonRally
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
-            var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_small_5"));
+            var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_5"));
             _car = new Car(_world, carSprite, tireSprite) {Body = {Position = new Vector2(1f, 1f)}};
             _car.CarBehavior = new ManualCarBehavior(_car);
 
-            var ground = BodyFactory.CreateCircle(_world, 3f, 0, userData: new GroundAreaUserData(0.5f, false));
+            var ground = BodyFactory.CreateCircle(_world, 10f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
-            ground = BodyFactory.CreateCircle(_world, 3f, 0, position: new Vector2(1f), userData: new GroundAreaUserData(0.2f, false));
+            ground = BodyFactory.CreateCircle(_world,
+                                              1f,
+                                              0,
+                                              new Vector2(10f),
+                                              userData: new GroundAreaUserData(0.2f, false));
             ground.IsSensor = true;
 
             _font = Content.Load<SpriteFont>("Font");
@@ -115,7 +121,7 @@ namespace CannonRally
         {
             var pathPolyline = (PolylineF) tiledMap?.GetObjectGroup(pathLayerName)?.Objects?.First()?.Shape;
 
-            if (pathPolyline == null || !pathPolyline.Points.Any())
+            if ((pathPolyline == null) || !pathPolyline.Points.Any())
             {
                 throw new Exception("Level path not found.");
             }
@@ -139,21 +145,31 @@ namespace CannonRally
             var fudB = (FixtureUserData.FixtureUserData) contact.FixtureB.UserData;
 
             if ((fudA == null) || (fudB == null))
+            {
                 return;
+            }
 
             if ((fudA.Type == FixtureUserDataType.CarTire) && (fudB.Type == FixtureUserDataType.GroundArea))
+            {
                 TireVsGroundArea(contact.FixtureA, contact.FixtureB, began);
+            }
             else if ((fudA.Type == FixtureUserDataType.GroundArea) && (fudB.Type == FixtureUserDataType.CarTire))
+            {
                 TireVsGroundArea(contact.FixtureB, contact.FixtureA, began);
+            }
         }
 
         private void TireVsGroundArea(Fixture tireFixture, Fixture groundFixture, bool began)
         {
             var tire = (Tire) tireFixture.Body.UserData;
             if (began)
+            {
                 tire.AddGroundArea((GroundAreaUserData) groundFixture.UserData);
+            }
             else
+            {
                 tire.RemoveGroundArea((GroundAreaUserData) groundFixture.UserData);
+            }
         }
 
         /// <summary>
@@ -184,7 +200,7 @@ namespace CannonRally
                 _debugView.Enabled = !_debugView.Enabled;
             }
 
-            _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f/30f));
+            _world.Step(Math.Min((float) gameTime.ElapsedGameTime.TotalSeconds, 1f / 30f));
 
             _car.Update(gameTime);
             _camera.LookAt(ConvertUnits.ToDisplayUnits(_car.Body.Position));
@@ -224,14 +240,14 @@ namespace CannonRally
 
         private void RenderSimulationDebugView()
         {
+            _camera.GetViewMatrix(Vector2.Zero);
             var projection = Matrix.CreateOrthographicOffCenter(
                 0f,
-                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width),
-                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height),
+                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Width * 2),
+                ConvertUnits.ToSimUnits(_graphics.GraphicsDevice.Viewport.Height * 2),
                 0f,
                 0f,
                 1f);
-
 
             var simView = GetSimulationView();
 
@@ -242,12 +258,11 @@ namespace CannonRally
         {
             var matRotation = Matrix.CreateRotationZ(_camera.Rotation);
             var matZoom = Matrix.CreateScale(_camera.Zoom);
-            var translateBody =
-                new Vector3(
-                    -new Vector2(ConvertUnits.ToSimUnits(_camera.Position.X),
-                        ConvertUnits.ToSimUnits(_camera.Position.Y)), 0f);
+            var translateBody = new Vector3(-new Vector2(ConvertUnits.ToSimUnits(_camera.Position.X),
+                                                         ConvertUnits.ToSimUnits(_camera.Position.Y)),
+                                            0f);
 
-            return Matrix.CreateTranslation(-_translateCenter + translateBody)*matRotation*matZoom*
+            return Matrix.CreateTranslation(-_translateCenter + translateBody) * matRotation * matZoom *
                    Matrix.CreateTranslation(_translateCenter);
         }
     }
