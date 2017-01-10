@@ -99,10 +99,13 @@ namespace CannonRally
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_5"));
             _car = new Car(_world, carSprite, tireSprite);
+            _car.ResetPosition(new Vector2(26f, 46f), -MathHelper.PiOver2);
             _car.CarBehavior = new ManualCarBehavior(_car);
 
             var greenCarSprite = new Sprite(Content.Load<Texture2D>("car_green_2"));
             _enemyCar = new Car(_world, greenCarSprite, tireSprite);
+            _enemyCar.ResetPosition(new Vector2(28f, 49f), -MathHelper.PiOver2);
+
             var ground = BodyFactory.CreateCircle(_world, 10f, 0, userData: new GroundAreaUserData(0.5f, false));
             ground.IsSensor = true;
             ground = BodyFactory.CreateCircle(_world,

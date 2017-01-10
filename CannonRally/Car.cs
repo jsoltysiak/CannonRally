@@ -24,6 +24,10 @@ namespace CannonRally
         public readonly IList<Tire> FrontTires;
         public readonly IList<Tire> RearTires;
 
+        private float _wheelXOffset = 0.7f;
+        private float _frontWheelYOffset = 1f;
+        private float _rearWheelYOffset = 1f;
+
         public Car(World world, Sprite hullSprite, Sprite tireSprite)
         {
             _hullSprite = hullSprite;
@@ -41,22 +45,22 @@ namespace CannonRally
             FrontTires = new List<Tire>();
             var tire = CreateTire(world, tireSprite);
             FrontTires.Add(tire);
-            var joint = CreateWheelJoint(world, tire.Body, new Vector2(-0.7f, -1f));
+            var joint = CreateWheelJoint(world, tire.Body, new Vector2(-_wheelXOffset, -_frontWheelYOffset));
             _frontRightJoint = joint;
 
             tire = CreateTire(world, tireSprite);
             FrontTires.Add(tire);
-            joint = CreateWheelJoint(world, tire.Body, new Vector2(0.7f, -1f));
+            joint = CreateWheelJoint(world, tire.Body, new Vector2(_wheelXOffset, -_frontWheelYOffset));
             _frontLeftJoint = joint;
 
             RearTires = new List<Tire>();
             tire = CreateTire(world, tireSprite);
             RearTires.Add(tire);
-            CreateWheelJoint(world, tire.Body, new Vector2(0.7f, 1));
+            CreateWheelJoint(world, tire.Body, new Vector2(_wheelXOffset, _rearWheelYOffset));
 
             tire = CreateTire(world, tireSprite);
             RearTires.Add(tire);
-            CreateWheelJoint(world, tire.Body, new Vector2(-0.7f, 1f));
+            CreateWheelJoint(world, tire.Body, new Vector2(-_wheelXOffset, _rearWheelYOffset));
         }
 
         public float MaxForwardSpeed { get; } = 25f;
@@ -65,6 +69,26 @@ namespace CannonRally
         public ICarBehavior CarBehavior { get; set; }
 
         public Body Body { get; }
+
+        public void ResetPosition(Vector2 position, float rotation)
+        {
+            Body.Position = position + RotateAboutOrigin(Body.LocalCenter, Body.WorldCenter, rotation);
+            FrontTires[0].Body.Position = position + RotateAboutOrigin(new Vector2(-_wheelXOffset, -_frontWheelYOffset), Body.LocalCenter, rotation);
+            FrontTires[1].Body.Position = position + RotateAboutOrigin(new Vector2(_wheelXOffset, -_frontWheelYOffset), Body.LocalCenter, rotation);
+            RearTires[0].Body.Position = position + RotateAboutOrigin(new Vector2(_wheelXOffset, _rearWheelYOffset), Body.LocalCenter, rotation);
+            RearTires[1].Body.Position = position + RotateAboutOrigin(new Vector2(-_wheelXOffset, _rearWheelYOffset), Body.LocalCenter, rotation);
+
+            Body.Rotation = rotation;
+            FrontTires[0].Body.Rotation = rotation;
+            FrontTires[1].Body.Rotation = rotation;
+            RearTires[0].Body.Rotation = rotation;
+            RearTires[1].Body.Rotation = rotation;
+        }
+
+        public Vector2 RotateAboutOrigin(Vector2 point, Vector2 origin, float rotation)
+        {
+            return Vector2.Transform(point - origin, Matrix.CreateRotationZ(rotation)) + origin;
+        }
 
         private RevoluteJoint CreateWheelJoint(World world, Body tireBody, Vector2 anchorPosition)
         {
