@@ -44,6 +44,7 @@
     <Compile Include="FixtureUserData\TireUserData.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="ICarBehavior.cs" />
+    <Compile Include="PathFollowerCarBehavior.cs" />
     <Compile Include="ManualCarBehavior.cs" />
     <Compile Include="Path.cs" />
     <Compile Include="Program.cs" />
