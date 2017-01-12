@@ -120,7 +120,7 @@ namespace CannonRally
             if (CarBehavior != null)
             {
                 desiredSpeed = CarBehavior.GetDesiredSpeed();
-                desiredAngle = CarBehavior.GetDesiredWheelAngle();
+                desiredAngle = MathUtils.Clamp(CarBehavior.GetDesiredWheelAngle(), -LockAngle, LockAngle); 
             }
             var angleNow = _frontLeftJoint.JointAngle;
             var angleToTurn = desiredAngle - angleNow;
@@ -146,27 +146,24 @@ namespace CannonRally
 
         private void UpdateDrive(Tire tire, float desiredSpeed)
         {
-            if (Math.Abs(desiredSpeed) > float.Epsilon)
+            var currentForwardNormal = tire.Body.GetWorldVector(new Vector2(0, -1));
+            var currentSpeed = Vector2.Dot(tire.GetForwardVelocity(), currentForwardNormal);
+
+            float force = 0;
+            if (desiredSpeed > currentSpeed)
             {
-                var currentForwardNormal = tire.Body.GetWorldVector(new Vector2(0, -1));
-                var currentSpeed = Vector2.Dot(tire.GetForwardVelocity(), currentForwardNormal);
-
-                float force = 0;
-                if (desiredSpeed > currentSpeed)
-                {
-                    force = tire.MaxDriveForce;
-                }
-                else if (desiredSpeed < currentSpeed)
-                {
-                    force = -tire.MaxDriveForce;
-                }
-                else
-                {
-                    return;
-                }
-
-                tire.Body.ApplyForce(force * currentForwardNormal, Body.WorldCenter);
+                force = tire.MaxDriveForce;
             }
+            else if (desiredSpeed < currentSpeed)
+            {
+                force = -tire.MaxBreakForce;
+            }
+            else
+            {
+                return;
+            }
+
+            tire.Body.ApplyForce(force * currentForwardNormal, Body.WorldCenter);
         }
 
         public void Draw(SpriteBatch spriteBatch)

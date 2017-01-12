@@ -31,6 +31,7 @@ namespace CannonRally
 
         public Body Body { get; set; }
         public Sprite Sprite { get; set; }
+        public float MaxBreakForce { get; } = 15f;
 
         public void Update(GameTime gameTime)
         {

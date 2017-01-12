@@ -11,7 +11,7 @@ namespace CannonRally
             _nodes = nodes;
         }
 
-        private Vector2[] GetNodes()
+        public Vector2[] GetNodes()
         {
             return _nodes;
         }

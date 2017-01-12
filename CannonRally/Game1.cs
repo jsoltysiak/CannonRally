@@ -96,6 +96,22 @@ namespace CannonRally
             // Create a new SpriteBatch, which can be used to draw textures.
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            var groundSnow = BodyFactory.CreateCircle(_world, 10f, 0, userData: new GroundAreaUserData(0.5f, false));
+            groundSnow.IsSensor = true;
+            var groundIce = BodyFactory.CreateCircle(_world,
+                                              1f,
+                                              0,
+                                              new Vector2(10f),
+                                              userData: new GroundAreaUserData(0.2f, false));
+            groundIce.IsSensor = true;
+
+            _font = Content.Load<SpriteFont>("Font");
+            _debugView.LoadContent(GraphicsDevice, Content);
+
+            _tiledMap = Content.Load<TiledMap>("level01");
+            _mapRenderer.SwapMap(_tiledMap);
+            var path = GetPath(_tiledMap, "path");
+
             var tireSprite = new Sprite(Content.Load<Texture2D>("tire"));
             var carSprite = new Sprite(Content.Load<Texture2D>("car_yellow_5"));
             _car = new Car(_world, carSprite, tireSprite);
@@ -105,23 +121,7 @@ namespace CannonRally
             var greenCarSprite = new Sprite(Content.Load<Texture2D>("car_green_2"));
             _enemyCar = new Car(_world, greenCarSprite, tireSprite);
             _enemyCar.ResetPosition(new Vector2(28f, 49f), -MathHelper.PiOver2);
-            _enemyCar.CarBehavior = new PathFollowerCarBehavior(_enemyCar);
-
-            var ground = BodyFactory.CreateCircle(_world, 10f, 0, userData: new GroundAreaUserData(0.5f, false));
-            ground.IsSensor = true;
-            ground = BodyFactory.CreateCircle(_world,
-                                              1f,
-                                              0,
-                                              new Vector2(10f),
-                                              userData: new GroundAreaUserData(0.2f, false));
-            ground.IsSensor = true;
-
-            _font = Content.Load<SpriteFont>("Font");
-            _debugView.LoadContent(GraphicsDevice, Content);
-
-            _tiledMap = Content.Load<TiledMap>("level01");
-            _mapRenderer.SwapMap(_tiledMap);
-            var path = GetPath(_tiledMap, "path");
+            _enemyCar.CarBehavior = new PathFollowerCarBehavior(_enemyCar, path);
         }
 
         private static Path GetPath(TiledMap tiledMap, string pathLayerName)
